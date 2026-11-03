@@ -9,4 +9,4 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：预定模块地图
 - [AGENTS.md](AGENTS.md)：协作规则
 
-当前进度是 M0：`llm_calculate` 包可导入，验证命令是 `pytest`。本地页面仍预定为 `python -m llm_calculate`，尚未提供。
+当前进度是 M1：`estimate.py` 计算权重、KV cache 和每卡 2 GiB 开销，验证命令是 `pytest`。目录和本地页面还没有。

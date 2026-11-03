@@ -32,6 +32,7 @@ EXPECTED_GPUS = (
     ("L40S 48GB", 48, 864, 362.05, 733),
     ("A100 80GB SXM", 80, 2039, 312, None),
     ("H100 80GB SXM", 80, 3350, 989.5, 1979),
+    ("H200 141GB SXM", 141, 4800, 989.5, 1979),
     ("H20 96GB", 96, 4000, 148, 296),
 )
 
@@ -176,6 +177,33 @@ def test_llama31_70b_bf16_rtx4090_one_card_does_not_fit():
     assert chosen.gpu_name == "A100 80GB SXM"
     assert report.note is None
     assert max(option.cards for option in report.options) == 8
+    h200 = next(option for option in report.options if option.gpu_name == "H200 141GB SXM" and option.cards == 1)
+    assert h200.available is True
+    assert h200.verdict == "紧张"
+
+
+def test_h200_sxm_alone_recommends_two_cards():
+    gpu = get_gpu("H200 141GB SXM")
+    assert (gpu.vram_gib, gpu.bandwidth_gb_s, gpu.fp16_tflops, gpu.fp8_tflops) == (141, 4800, 989.5, 1979)
+    model = get_model("Llama 3.1 70B")
+    report = evaluate_fits(
+        total_params=model.total_params,
+        weight_dtype="BF16",
+        concurrent=1,
+        context=8192,
+        layers=model.layers,
+        kv_heads=model.kv_heads,
+        head_dim=model.head_dim,
+        kv_dtype="BF16",
+        gpus=(gpu,),
+    )
+    one = next(option for option in report.options if option.cards == 1)
+    two = next(option for option in report.options if option.cards == 2)
+    assert one.verdict == "紧张"
+    assert two.verdict == "放下"
+    assert report.recommendation.gpu_name == "H200 141GB SXM"
+    assert report.recommendation.cards == 2
+    assert report.recommendation.verdict == "放下"
 
 
 def _option(name, vram, cards, verdict):

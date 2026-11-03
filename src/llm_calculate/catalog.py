@@ -17,6 +17,7 @@ class Model:
     head_dim: int
     suggested_context: int
     source: str
+    kv_note: str = ""
 
 
 @dataclass(frozen=True)

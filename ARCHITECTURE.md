@@ -4,13 +4,16 @@
 > 随代码生长维护：新增 / 重命名文件时顺手补一行；本文件不是设计文档，不写产品意图。
 > 每完成约 3 个里程碑，或定位失败时，对照目录做一次最小漂移审计。
 
-当前只有文档。下表是预定模块，文件尚未创建。
+M0 已有包入口和 `pytest`。下表里 `estimate.py`、`catalog.py`、数据文件、`__main__.py`、`web/index.html`、`tests/test_estimate.py` 仍是预定模块，文件尚未创建。
 
 ## 模块总览
 
 | 文件 / 目录 | 职责 | 关键导出 / 入口 | 依赖谁 |
 |-----------|------|----------------|--------|
-| `src/llm_calculate/estimate.py` | 纯逻辑 / 可直测。权重、KV、开销、卡数结论、吞吐 | 估算函数 | 无 UI、无网络、无进程外 I/O |
+| `pyproject.toml` | 项目元数据。`pytest` 从 `src` 导入包 | `pytest` | 无 |
+| `src/llm_calculate/__init__.py` | 包入口。估算函数尚未放在这里 | 包 `llm_calculate` | 无 |
+| `tests/test_package.py` | M0：断言包可导入 | `pytest` | `llm_calculate` |
+| `src/llm_calculate/estimate.py` | 纯逻辑 / 可直测。权重、KV、开销、卡数结论、吞吐。尚未创建 | 估算函数 | 无 UI、无网络、无进程外 I/O |
 | `src/llm_calculate/catalog.py` | 读取模型与显卡目录 | 按名称取模型、列出显卡 | `data/models.json`、`data/gpus.json` |
 | `data/models.json` | 内置模型的结构参数 | 数据 | 无 |
 | `data/gpus.json` | 预置显卡的显存、带宽、算力 | 数据 | 无 |

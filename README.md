@@ -9,4 +9,4 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：预定模块地图
 - [AGENTS.md](AGENTS.md)：协作规则
 
-当前进度是 M0：还没有代码。验证命令预定为 `pytest`，本地页面预定为 `python -m llm_calculate`。
+当前进度是 M0：`llm_calculate` 包可导入，验证命令是 `pytest`。本地页面仍预定为 `python -m llm_calculate`，尚未提供。

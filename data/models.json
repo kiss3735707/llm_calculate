@@ -1,0 +1,124 @@
+{
+  "models": [
+    {
+      "name": "Llama 3.1 8B",
+      "total_params": 8030261248,
+      "active_params": 8030261248,
+      "layers": 32,
+      "hidden": 4096,
+      "attn_heads": 32,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "meta-llama/Llama-3.1-8B。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Llama 3.1 70B",
+      "total_params": 70553706496,
+      "active_params": 70553706496,
+      "layers": 80,
+      "hidden": 8192,
+      "attn_heads": 64,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "meta-llama/Llama-3.1-70B。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Qwen2.5 7B",
+      "total_params": 7615616512,
+      "active_params": 7615616512,
+      "layers": 28,
+      "hidden": 3584,
+      "attn_heads": 28,
+      "kv_heads": 4,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "Qwen/Qwen2.5-7B。head_dim = hidden / 注意力头数。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Qwen2.5 14B",
+      "total_params": 14770033664,
+      "active_params": 14770033664,
+      "layers": 48,
+      "hidden": 5120,
+      "attn_heads": 40,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "Qwen/Qwen2.5-14B。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Qwen2.5 32B",
+      "total_params": 32763876352,
+      "active_params": 32763876352,
+      "layers": 64,
+      "hidden": 5120,
+      "attn_heads": 40,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "Qwen/Qwen2.5-32B。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Qwen2.5 72B",
+      "total_params": 72706203648,
+      "active_params": 72706203648,
+      "layers": 80,
+      "hidden": 8192,
+      "attn_heads": 64,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 131072,
+      "source": "Qwen/Qwen2.5-72B。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Mistral 7B",
+      "total_params": 7248023552,
+      "active_params": 7248023552,
+      "layers": 32,
+      "hidden": 4096,
+      "attn_heads": 32,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 32768,
+      "source": "mistralai/Mistral-7B-v0.3。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Gemma 2 9B",
+      "total_params": 9241705984,
+      "active_params": 9241705984,
+      "layers": 42,
+      "hidden": 3584,
+      "attn_heads": 16,
+      "kv_heads": 8,
+      "head_dim": 256,
+      "suggested_context": 8192,
+      "source": "google/gemma-2-9b。config 的 head_dim 为 256，不是 hidden / 注意力头数。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Gemma 2 27B",
+      "total_params": 27227128320,
+      "active_params": 27227128320,
+      "layers": 46,
+      "hidden": 4608,
+      "attn_heads": 32,
+      "kv_heads": 16,
+      "head_dim": 128,
+      "suggested_context": 8192,
+      "source": "google/gemma-2-27b。config 的 head_dim 为 128，不是 hidden / 注意力头数。参数个数为 BF16 权重张量总数"
+    },
+    {
+      "name": "Mixtral 8x7B",
+      "total_params": 46702792704,
+      "active_params": 12879925248,
+      "layers": 32,
+      "hidden": 4096,
+      "attn_heads": 32,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "suggested_context": 32768,
+      "source": "mistralai/Mixtral-8x7B-v0.1。总参数为 BF16 权重张量总数。激活参数 = 非专家权重 + 每层 2/8 个专家 MLP"
+    }
+  ]
+}

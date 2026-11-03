@@ -1,0 +1,52 @@
+{
+  "gpus": [
+    {
+      "name": "RTX 4090 24GB",
+      "vram_gib": 24,
+      "bandwidth_gb_s": 1008,
+      "fp16_tflops": 330.3,
+      "fp8_tflops": 660.6,
+      "source": "NVIDIA Ada 白皮书附录。无稀疏、FP16 累加（不用 FP32 累加的 165.2）"
+    },
+    {
+      "name": "RTX 3090 24GB Founders Edition",
+      "vram_gib": 24,
+      "bandwidth_gb_s": 936,
+      "fp16_tflops": 142,
+      "fp8_tflops": null,
+      "source": "NVIDIA Ampere GA102 白皮书 Table 9。无稀疏、FP16 累加。Ampere 无 FP8"
+    },
+    {
+      "name": "L40S 48GB",
+      "vram_gib": 48,
+      "bandwidth_gb_s": 864,
+      "fp16_tflops": 362.05,
+      "fp8_tflops": 733,
+      "source": "NVIDIA L40S 产品规格。竖线左侧为无稀疏（带稀疏为 733 / 1466）"
+    },
+    {
+      "name": "A100 80GB SXM",
+      "vram_gib": 80,
+      "bandwidth_gb_s": 2039,
+      "fp16_tflops": 312,
+      "fp8_tflops": null,
+      "source": "NVIDIA A100 数据表 SXM。无稀疏一侧（带稀疏为 624）。不用 PCIe 的 1935 GB/s。无 FP8"
+    },
+    {
+      "name": "H100 80GB SXM",
+      "vram_gib": 80,
+      "bandwidth_gb_s": 3350,
+      "fp16_tflops": 989.5,
+      "fp8_tflops": 1979,
+      "source": "NVIDIA H100 数据表 SXM。脚注为带稀疏（FP16 1979、FP8 3958），本表取一半。不用 PCIe"
+    },
+    {
+      "name": "H20 96GB",
+      "vram_gib": 96,
+      "bandwidth_gb_s": 4000,
+      "fp16_tflops": 148,
+      "fp8_tflops": 296,
+      "source": "NVIDIA 无公开产品页。2023 渠道简报的单值（96 GB HBM3、4.0 TB/s、FP16 148、FP8 296），按无稀疏录入，不再减半"
+    }
+  ]
+}

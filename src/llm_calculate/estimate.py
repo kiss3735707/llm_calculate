@@ -1,6 +1,6 @@
-"""推理显存拆分，以及 1/2/4/8 张同型号卡的放下、紧张、放不下。
+"""推理显存拆分、1/2/4/8 卡结论，以及粗估吞吐。
 
-峰值激活不单独建模，只计每卡固定开销。不含吞吐。
+峰值激活不单独建模。吞吐不含卡间通信，也不含注意力 FLOPs。
 """
 
 from collections.abc import Sequence
@@ -13,6 +13,13 @@ CARD_COUNTS = (1, 2, 4, 8)
 FIT_RATIO_NUM = 9
 FIT_RATIO_DEN = 10
 BEYOND_PRESET_NOTE = "超出预置 1/2/4/8 方案"
+DECODE_EFFICIENCY = 0.6
+PREFILL_EFFICIENCY = 0.4
+# 厂商带宽是 GB/s（10^9 字节/秒），算力是 TFLOPS（10^12 FLOP/秒）。显存仍用 GiB。
+BYTES_PER_GB = 10**9
+FLOPS_PER_TFLOP = 10**12
+ROUGH_ESTIMATE_LABEL = "粗估，不是实测"
+FP8_FALLBACK_NOTE = "该显卡没有 FP8 算力，预填退回 FP16"
 
 _WEIGHT_BYTES = {
     "BF16": 2.0,
@@ -46,6 +53,10 @@ def weight_gib(total_params: int, dtype: str) -> float:
     return total_params * _bytes_per_weight(dtype) / GIB
 
 
+def _kv_bytes_one_request(context: int, layers: int, kv_heads: int, head_dim: int, dtype: str) -> int:
+    return context * layers * 2 * kv_heads * head_dim * _bytes_per_kv(dtype)
+
+
 def kv_cache_gib(
     *,
     concurrent: int,
@@ -55,8 +66,7 @@ def kv_cache_gib(
     head_dim: int,
     dtype: str,
 ) -> float:
-    factors = concurrent * context * layers * 2 * kv_heads * head_dim
-    return factors * _bytes_per_kv(dtype) / GIB
+    return concurrent * _kv_bytes_one_request(context, layers, kv_heads, head_dim, dtype) / GIB
 
 
 def overhead_gib(cards: int) -> float:
@@ -217,4 +227,56 @@ def evaluate_fits(
         options=tuple(options),
         recommendation=chosen,
         note=None if chosen is not None else BEYOND_PRESET_NOTE,
+    )
+
+
+@dataclass(frozen=True)
+class Throughput:
+    decode_tokens_per_s: float
+    prefill_tokens_per_s: float
+    decode_efficiency: float
+    prefill_efficiency: float
+    prefill_compute: str
+    prefill_note: str | None
+    label: str
+
+
+def estimate_throughput(
+    *,
+    active_params: int,
+    weight_dtype: str,
+    concurrent: int,
+    context: int,
+    layers: int,
+    kv_heads: int,
+    head_dim: int,
+    kv_dtype: str,
+    cards: int,
+    bandwidth_gb_s: float,
+    fp16_tflops: float,
+    fp8_tflops: float | None = None,
+    decode_efficiency: float = DECODE_EFFICIENCY,
+    prefill_efficiency: float = PREFILL_EFFICIENCY,
+) -> Throughput:
+    weight_bytes = active_params * _bytes_per_weight(weight_dtype)
+    kv_one = _kv_bytes_one_request(context, layers, kv_heads, head_dim, kv_dtype)
+    bytes_per_step = weight_bytes + concurrent * kv_one
+    decode = concurrent * bandwidth_gb_s * BYTES_PER_GB * cards * decode_efficiency / bytes_per_step
+    if weight_dtype == "FP8" and fp8_tflops is not None:
+        tflops = fp8_tflops
+        compute = "FP8"
+        note = None
+    else:
+        tflops = fp16_tflops
+        compute = "FP16"
+        note = FP8_FALLBACK_NOTE if weight_dtype == "FP8" else None
+    prefill = tflops * FLOPS_PER_TFLOP * cards * prefill_efficiency / (2 * active_params)
+    return Throughput(
+        decode_tokens_per_s=decode,
+        prefill_tokens_per_s=prefill,
+        decode_efficiency=decode_efficiency,
+        prefill_efficiency=prefill_efficiency,
+        prefill_compute=compute,
+        prefill_note=note,
+        label=ROUGH_ESTIMATE_LABEL,
     )

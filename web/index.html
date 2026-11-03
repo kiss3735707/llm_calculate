@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>推理显存估算</title>
+  <style>
+    body { margin: 2rem auto; max-width: 64rem; padding: 0 1rem; font: 16px/1.5 sans-serif; color: #1c1c1c; }
+    h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+    form, #result { display: grid; gap: 0.75rem; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.75rem; }
+    label { display: grid; gap: 0.25rem; }
+    input, select, button { font: inherit; padding: 0.35rem 0.5rem; }
+    button { width: fit-content; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #ddd; text-align: left; padding: 0.4rem 0.3rem; vertical-align: top; }
+    .box { background: #f4f1e8; padding: 0.8rem 1rem; }
+    .error { color: #8a1f1f; }
+  </style>
+</head>
+<body>
+  <h1>推理显存估算</h1>
+  <p>选定模型和部署参数，看显存拆分、要几张卡，以及量级吞吐。</p>
+  <p id="constants">正在读取目录…</p>
+  <p>粗估，不是实测</p>
+  <form id="form">
+    <div class="row">
+      <label>模型
+        <select name="model" id="model"></select>
+      </label>
+      <label>权重精度
+        <select name="weight_dtype" id="weight"></select>
+      </label>
+      <label>KV 精度
+        <select name="kv_dtype" id="kv"></select>
+      </label>
+      <label>上下文
+        <input name="context" id="context" inputmode="numeric" required>
+      </label>
+      <label>并发
+        <input name="concurrent" id="concurrent" inputmode="numeric" value="1" required>
+      </label>
+      <label>显卡范围
+        <select name="gpu_mode" id="gpu-mode">
+          <option value="all">全部预置显卡</option>
+          <option value="one">只看一张预置显卡</option>
+          <option value="custom">自定义一张显卡</option>
+        </select>
+      </label>
+      <label id="gpu-label">预置显卡
+        <select name="gpu_name" id="gpu"></select>
+      </label>
+    </div>
+    <fieldset id="custom-model">
+      <legend>自定义模型</legend>
+      <div class="row">
+        <label>名称 <input name="custom_name" id="custom-name"></label>
+        <label>总参数 <input name="total_params" id="total-params" inputmode="numeric"></label>
+        <label>激活参数（可空） <input name="active_params" id="active-params" inputmode="numeric"></label>
+        <label>层数 <input name="layers" id="layers" inputmode="numeric"></label>
+        <label>hidden <input name="hidden" id="hidden" inputmode="numeric"></label>
+        <label>注意力头数 <input name="attn_heads" id="attn-heads" inputmode="numeric"></label>
+        <label>KV 头数 <input name="kv_heads" id="kv-heads" inputmode="numeric"></label>
+        <label>head dim（可空） <input name="head_dim" id="head-dim" inputmode="numeric"></label>
+      </div>
+    </fieldset>
+    <fieldset id="custom-gpu">
+      <legend>自定义显卡</legend>
+      <div class="row">
+        <label>名称 <input name="gpu_custom_name" id="gpu-custom-name"></label>
+        <label>显存 GiB <input name="vram_gib" id="vram" inputmode="decimal"></label>
+        <label>带宽 GB/s <input name="bandwidth_gb_s" id="bandwidth" inputmode="decimal"></label>
+        <label>FP16 TFLOPS <input name="fp16_tflops" id="fp16" inputmode="decimal"></label>
+        <label>FP8 TFLOPS（可空） <input name="fp8_tflops" id="fp8" inputmode="decimal"></label>
+      </div>
+    </fieldset>
+    <button type="submit">估算</button>
+  </form>
+  <section id="result"></section>
+  <script>
+    const modelSelect = document.querySelector("#model");
+    const weightSelect = document.querySelector("#weight");
+    const kvSelect = document.querySelector("#kv");
+    const gpuSelect = document.querySelector("#gpu");
+    const modeSelect = document.querySelector("#gpu-mode");
+    const contextInput = document.querySelector("#context");
+    let catalog = null;
+    let kvTouched = false;
+
+    function defaultKv(weight) {
+      return weight === "INT8" || weight === "INT4" ? "BF16" : weight;
+    }
+
+    function showScope() {
+      const mode = modeSelect.value;
+      document.querySelector("#gpu-label").hidden = mode !== "one";
+      document.querySelector("#custom-model").hidden = modelSelect.value !== "__custom__";
+      document.querySelector("#custom-gpu").hidden = mode !== "custom";
+    }
+
+    function fillSelect(select, values, labelOf) {
+      select.replaceChildren();
+      for (const value of values) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = labelOf(value);
+        select.append(option);
+      }
+    }
+
+    function fmtGib(value) {
+      if (typeof value !== "number") return "—";
+      if (Math.abs(value - Math.round(value)) < 1e-6) return String(Math.round(value));
+      return String(Math.round(value * 1000) / 1000);
+    }
+
+    function fmtTokens(value) {
+      if (typeof value !== "number") return "—";
+      return Math.round(value).toLocaleString("zh-CN");
+    }
+
+    function addRow(parent, cells) {
+      const row = document.createElement("tr");
+      for (const cell of cells) {
+        const td = document.createElement("td");
+        td.textContent = cell;
+        row.append(td);
+      }
+      parent.append(row);
+    }
+
+    function render(body) {
+      const root = document.querySelector("#result");
+      root.replaceChildren();
+      if (!body.ok) {
+        const error = document.createElement("p");
+        error.className = "error";
+        error.textContent = body.message;
+        root.append(error);
+        return;
+      }
+      const split = document.createElement("div");
+      split.className = "box";
+      split.append(
+        line("权重 " + fmtGib(body.weight_gib) + " GiB"),
+        line("KV cache " + fmtGib(body.kv_gib) + " GiB"),
+        line("每卡开销 " + fmtGib(body.overhead_gib_per_card) + " GiB"),
+      );
+      if (body.recommendation) {
+        const chosen = body.recommendation;
+        split.append(line(
+          "推荐 " + chosen.gpu_name + " × " + chosen.cards + "（" + chosen.verdict + "），总显存 "
+          + fmtGib(chosen.total_gib) + " GiB"
+        ));
+        split.append(line(
+          "解码 " + fmtTokens(chosen.decode_tokens_per_s) + " tokens/s，预填 "
+          + fmtTokens(chosen.prefill_tokens_per_s) + " tokens/s"
+        ));
+        if (chosen.prefill_note) split.append(line(chosen.prefill_note));
+      } else if (body.note) {
+        split.append(line(body.note));
+      }
+      root.append(split);
+
+      const assumptions = document.createElement("ul");
+      for (const item of body.assumptions) assumptions.append(line(item, "li"));
+      root.append(assumptions);
+
+      const table = document.createElement("table");
+      const head = document.createElement("tr");
+      for (const title of ["显卡", "显存 GiB", "张数", "单卡占用 GiB", "结论", "解码 tokens/s", "预填 tokens/s"]) {
+        const th = document.createElement("th");
+        th.textContent = title;
+        head.append(th);
+      }
+      table.append(head);
+      for (const option of body.options) {
+        const verdict = option.available ? option.verdict : "不可用：" + option.reason;
+        addRow(table, [
+          option.gpu_name,
+          fmtGib(option.vram_gib),
+          String(option.cards),
+          fmtGib(option.per_card_gib),
+          verdict,
+          fmtTokens(option.decode_tokens_per_s),
+          fmtTokens(option.prefill_tokens_per_s),
+        ]);
+      }
+      root.append(table);
+    }
+
+    function line(text, tag) {
+      const node = document.createElement(tag || "p");
+      node.textContent = text;
+      return node;
+    }
+
+    weightSelect.addEventListener("change", () => {
+      if (!kvTouched) kvSelect.value = defaultKv(weightSelect.value);
+    });
+    kvSelect.addEventListener("change", () => { kvTouched = true; });
+    modelSelect.addEventListener("change", () => {
+      const found = catalog.models.find((item) => item.name === modelSelect.value);
+      if (found) contextInput.value = found.suggested_context;
+      showScope();
+    });
+    modeSelect.addEventListener("change", showScope);
+
+    document.querySelector("#form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = {
+        weight_dtype: weightSelect.value,
+        kv_dtype: kvSelect.value,
+        context: Number(contextInput.value),
+        concurrent: Number(document.querySelector("#concurrent").value),
+        gpu_mode: modeSelect.value,
+        gpu_name: gpuSelect.value,
+      };
+      if (modelSelect.value === "__custom__") {
+        payload.custom_model = {
+          name: document.querySelector("#custom-name").value,
+          total_params: Number(document.querySelector("#total-params").value),
+          layers: Number(document.querySelector("#layers").value),
+          hidden: Number(document.querySelector("#hidden").value),
+          attn_heads: Number(document.querySelector("#attn-heads").value),
+          kv_heads: Number(document.querySelector("#kv-heads").value),
+        };
+        const active = document.querySelector("#active-params").value;
+        const head = document.querySelector("#head-dim").value;
+        if (active) payload.custom_model.active_params = Number(active);
+        if (head) payload.custom_model.head_dim = Number(head);
+      } else {
+        payload.model = modelSelect.value;
+      }
+      if (modeSelect.value === "custom") {
+        const fp8 = document.querySelector("#fp8").value;
+        payload.custom_gpu = {
+          name: document.querySelector("#gpu-custom-name").value,
+          vram_gib: Number(document.querySelector("#vram").value),
+          bandwidth_gb_s: Number(document.querySelector("#bandwidth").value),
+          fp16_tflops: Number(document.querySelector("#fp16").value),
+        };
+        if (fp8) payload.custom_gpu.fp8_tflops = Number(fp8);
+      }
+      const response = await fetch("/api/estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      render(await response.json());
+    });
+
+    fetch("/api/catalog").then((response) => response.json()).then((data) => {
+      catalog = data;
+      fillSelect(modelSelect, data.models.map((item) => item.name).concat(["__custom__"]), (value) => value === "__custom__" ? "自定义" : value);
+      fillSelect(weightSelect, data.weight_dtypes, (value) => value);
+      fillSelect(kvSelect, data.kv_dtypes, (value) => value);
+      fillSelect(gpuSelect, data.gpus.map((item) => item.name), (value) => value);
+      contextInput.value = data.models[0].suggested_context;
+      document.querySelector("#constants").textContent =
+        "解码效率 " + data.decode_efficiency + "，预填效率 " + data.prefill_efficiency
+        + "，每卡开销 " + data.overhead_gib_per_card + " GiB。这三项不能在页面上修改。";
+      showScope();
+    });
+  </script>
+</body>
+</html>

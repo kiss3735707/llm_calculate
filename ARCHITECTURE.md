@@ -4,7 +4,7 @@
 > 随代码生长维护：新增 / 重命名文件时顺手补一行；本文件不是设计文档，不写产品意图。
 > 每完成约 3 个里程碑，或定位失败时，对照目录做一次最小漂移审计。
 
-M0 到 M3 已有：包入口、显存、目录、卡数结论和粗估吞吐。下表里 `__main__.py`、`web/index.html` 仍未创建。
+M0 到 M4 已有：包入口、显存、目录、卡数结论、粗估吞吐和本地页面。
 
 ## 模块总览
 
@@ -17,11 +17,12 @@ M0 到 M3 已有：包入口、显存、目录、卡数结论和粗估吞吐。�
 | `src/llm_calculate/catalog.py` | 读取模型与显卡目录 | `models`、`gpus`、`get_model`、`get_gpu` | `data/models.json`、`data/gpus.json` |
 | `data/models.json` | 10 个内置模型的结构参数 | 数据 | 无 |
 | `data/gpus.json` | 预置显卡的显存、带宽、算力，与 DESIGN 表一致 | 数据 | 无 |
-| `src/llm_calculate/__main__.py` | 标准库 HTTP：提供页面和 JSON 接口 | `python -m llm_calculate` | `estimate.py`、`catalog.py` |
-| `web/index.html` | 中文页面：收集输入、展示结果 | 浏览器打开本地页面 | HTTP 接口 |
+| `src/llm_calculate/__main__.py` | 标准库 HTTP：提供页面和 JSON 接口。解析后调用估算函数 | `python -m llm_calculate`，`estimate_request` | `estimate.py`、`catalog.py`、`web/index.html` |
+| `web/index.html` | 中文页面：收集输入、展示结果 | 浏览器打开本地页面 | `GET /`、`GET /api/catalog`、`POST /api/estimate` |
 | `tests/test_estimate.py` | 锁住 Llama 3.1 8B 的 KV = 1 GiB，以及权重比例、KV 翻倍、每卡 2 GiB | `pytest` | `estimate.py` |
 | `tests/test_catalog.py` | 锁住目录、70B 在 RTX 4090 单卡放不下、推荐规则和 KV 头整除 | `pytest` | `catalog.py`、`estimate.py` |
 | `tests/test_throughput.py` | 锁住解码/预填粗估、效率成比例、FP8 回退和 MoE 激活参数 | `pytest` | `estimate.py`、`catalog.py` |
+| `tests/test_web.py` | 锁住页面请求与 `estimate_*` 同一组数字；非法输入只有中文说明 | `pytest` | `__main__.py` |
 
 （标成「纯逻辑 / 可直测」的模块必须保持无 UI、无网络、无进程外 I/O，保证 `pytest` 能闭环。）
 
@@ -46,4 +47,4 @@ M0 到 M3 已有：包入口、显存、目录、卡数结论和粗估吞吐。�
 
 - 自动化验证：`pytest`
 - 运行：`python -m llm_calculate`
-- 单测 / 集成补充：显存在 `tests/test_estimate.py`，目录和卡数在 `tests/test_catalog.py`，吞吐在 `tests/test_throughput.py`；页面与断言使用同一组输入
+- 单测 / 集成补充：显存在 `tests/test_estimate.py`，目录和卡数在 `tests/test_catalog.py`，吞吐在 `tests/test_throughput.py`，页面请求在 `tests/test_web.py`

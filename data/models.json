@@ -94,6 +94,7 @@
       "kv_heads": 8,
       "head_dim": 256,
       "suggested_context": 8192,
+      "kv_note": "滑动窗口按满上下文计算，结果偏保守",
       "source": "google/gemma-2-9b。config 的 head_dim 为 256，不是 hidden / 注意力头数。参数个数为 BF16 权重张量总数"
     },
     {
@@ -106,6 +107,7 @@
       "kv_heads": 16,
       "head_dim": 128,
       "suggested_context": 8192,
+      "kv_note": "滑动窗口按满上下文计算，结果偏保守",
       "source": "google/gemma-2-27b。config 的 head_dim 为 128，不是 hidden / 注意力头数。参数个数为 BF16 权重张量总数"
     },
     {

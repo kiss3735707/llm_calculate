@@ -9,4 +9,10 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：预定模块地图
 - [AGENTS.md](AGENTS.md)：协作规则
 
-当前进度是 M3：按带宽和算力粗估解码与预填吞吐，效率 0.6 和 0.4 出现在结果里。验证命令是 `pytest`。本地页面还没有。
+当前进度是 M4：本地中文页面。在仓库根目录运行：
+
+```
+PYTHONPATH=src python -m llm_calculate
+```
+
+浏览器打开 http://127.0.0.1:8765 。验证命令是 `pytest`。

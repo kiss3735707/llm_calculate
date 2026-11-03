@@ -9,4 +9,4 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：预定模块地图
 - [AGENTS.md](AGENTS.md)：协作规则
 
-当前进度是 M1：`estimate.py` 计算权重、KV cache 和每卡 2 GiB 开销，验证命令是 `pytest`。目录和本地页面还没有。
+当前进度是 M2：模型与显卡目录，以及 1/2/4/8 张卡的放下、紧张、放不下。验证命令是 `pytest`。吞吐和本地页面还没有。

@@ -16,7 +16,7 @@ M0 到 M4 已有：包入口、显存、目录、卡数结论、粗估吞吐和�
 | `src/llm_calculate/estimate.py` | 纯逻辑 / 可直测。权重、KV、开销、卡数结论、粗估吞吐 | `estimate_memory`、`evaluate_fits`、`estimate_throughput` | 无 UI、无网络、无进程外 I/O |
 | `src/llm_calculate/catalog.py` | 读取模型与显卡目录 | `models`、`gpus`、`get_model`、`get_gpu` | `data/models.json`、`data/gpus.json` |
 | `data/models.json` | 10 个内置模型的结构参数 | 数据 | 无 |
-| `data/gpus.json` | 预置显卡的显存、带宽、算力，与 DESIGN 表一致 | 数据 | 无 |
+| `data/gpus.json` | 预置显卡的显存、带宽、算力，与 DESIGN 表一致。未填峰值的国产卡带宽与 Tensor 为空 | 数据 | 无 |
 | `src/llm_calculate/__main__.py` | 标准库 HTTP：提供页面和 JSON 接口。解析后调用估算函数 | `python -m llm_calculate`，`estimate_request` | `estimate.py`、`catalog.py`、`web/index.html` |
 | `web/index.html` | 中文页面：收集输入、展示结果 | 浏览器打开本地页面 | `GET /`、`GET /api/catalog`、`POST /api/estimate` |
 | `tests/test_estimate.py` | 锁住 Llama 3.1 8B 的 KV = 1 GiB，以及权重比例、KV 翻倍、每卡 2 GiB | `pytest` | `estimate.py` |

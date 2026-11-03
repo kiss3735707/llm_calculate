@@ -16,3 +16,5 @@ PYTHONPATH=src python -m llm_calculate
 ```
 
 浏览器打开 http://127.0.0.1:8765 。验证命令是 `pytest`。
+
+国产卡里，昇腾 910C、寒武纪 MLU370-X8、摩尔线程 MTT S4000 用公开峰值带宽和 FP16 做粗估，不是 CUDA 实测。其余国产卡只有显存，不给吞吐数字。

@@ -20,6 +20,7 @@ BYTES_PER_GB = 10**9
 FLOPS_PER_TFLOP = 10**12
 ROUGH_ESTIMATE_LABEL = "粗估，不是实测"
 FP8_FALLBACK_NOTE = "该显卡没有 FP8 算力，预填退回 FP16"
+NON_CUDA_THROUGHPUT_NOTE = "国产/非CUDA，吞吐粗估不适用"
 
 _WEIGHT_BYTES = {
     "BF16": 2.0,
@@ -232,13 +233,14 @@ def evaluate_fits(
 
 @dataclass(frozen=True)
 class Throughput:
-    decode_tokens_per_s: float
-    prefill_tokens_per_s: float
+    decode_tokens_per_s: float | None
+    prefill_tokens_per_s: float | None
     decode_efficiency: float
     prefill_efficiency: float
-    prefill_compute: str
+    prefill_compute: str | None
     prefill_note: str | None
     label: str
+    note: str | None = None
 
 
 def estimate_throughput(
@@ -252,12 +254,23 @@ def estimate_throughput(
     head_dim: int,
     kv_dtype: str,
     cards: int,
-    bandwidth_gb_s: float,
-    fp16_tflops: float,
+    bandwidth_gb_s: float | None,
+    fp16_tflops: float | None,
     fp8_tflops: float | None = None,
     decode_efficiency: float = DECODE_EFFICIENCY,
     prefill_efficiency: float = PREFILL_EFFICIENCY,
 ) -> Throughput:
+    if bandwidth_gb_s is None or fp16_tflops is None:
+        return Throughput(
+            decode_tokens_per_s=None,
+            prefill_tokens_per_s=None,
+            decode_efficiency=decode_efficiency,
+            prefill_efficiency=prefill_efficiency,
+            prefill_compute=None,
+            prefill_note=NON_CUDA_THROUGHPUT_NOTE,
+            label=ROUGH_ESTIMATE_LABEL,
+            note=NON_CUDA_THROUGHPUT_NOTE,
+        )
     weight_bytes = active_params * _bytes_per_weight(weight_dtype)
     kv_one = _kv_bytes_one_request(context, layers, kv_heads, head_dim, kv_dtype)
     bytes_per_step = weight_bytes + concurrent * kv_one

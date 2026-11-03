@@ -24,8 +24,8 @@ class Model:
 class Gpu:
     name: str
     vram_gib: float
-    bandwidth_gb_s: float
-    fp16_tflops: float
+    bandwidth_gb_s: float | None
+    fp16_tflops: float | None
     fp8_tflops: float | None
     source: str
 

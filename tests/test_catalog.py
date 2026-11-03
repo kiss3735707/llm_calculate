@@ -3,13 +3,16 @@ from types import SimpleNamespace
 from llm_calculate.catalog import get_gpu, get_model, gpus, models
 from llm_calculate.estimate import (
     CARD_COUNTS,
+    NON_CUDA_THROUGHPUT_NOTE,
     CardOption,
+    estimate_throughput,
     evaluate_fits,
     fit_verdict,
     kv_cache_gib,
     per_card_gib,
     recommend,
 )
+from llm_calculate.__main__ import estimate_request
 
 # 官方 config / BF16 权重文件的参数个数。head_dim 以 config 为准，不拿 hidden // 头数回填。
 EXPECTED_MODELS = {
@@ -42,6 +45,17 @@ EXPECTED_GPUS = (
     ("L4 24GB", 24, 300, 121, 242.5),
     ("RTX 6000 Ada 48GB", 48, 960, 364.2, 728.5),
     ("RTX 5090 32GB", 32, 1792, 419, 838),
+    ("Ascend 910B 64GiB", 64, None, None, None),
+    ("Ascend 910C 128GiB", 128, None, None, None),
+    ("Cambricon MLU590 96GiB", 96, None, None, None),
+    ("Cambricon MLU370-X8 48GiB", 48, None, None, None),
+    ("Biren BR100 64GiB", 64, None, None, None),
+    ("Moore Threads MTT S4000 48GiB", 48, None, None, None),
+    ("Iluvatar BI-V150 64GiB", 64, None, None, None),
+    ("Kunlunxin P800 96GiB", 96, None, None, None),
+    ("Enflame CloudBlaze S60 48GiB", 48, None, None, None),
+    ("MetaX C500 64GiB", 64, None, None, None),
+    ("Hygon DCU K100-AI 64GiB", 64, None, None, None),
 )
 
 
@@ -212,6 +226,75 @@ def test_h200_sxm_alone_recommends_two_cards():
     assert report.recommendation.gpu_name == "H200 141GB SXM"
     assert report.recommendation.cards == 2
     assert report.recommendation.verdict == "放下"
+
+
+def test_domestic_placeholders_fit_by_vram_and_skip_throughput():
+    expected = (
+        ("Ascend 910B 64GiB", 64),
+        ("Ascend 910C 128GiB", 128),
+        ("Cambricon MLU590 96GiB", 96),
+        ("Cambricon MLU370-X8 48GiB", 48),
+        ("Biren BR100 64GiB", 64),
+        ("Moore Threads MTT S4000 48GiB", 48),
+        ("Iluvatar BI-V150 64GiB", 64),
+        ("Kunlunxin P800 96GiB", 96),
+        ("Enflame CloudBlaze S60 48GiB", 48),
+        ("MetaX C500 64GiB", 64),
+        ("Hygon DCU K100-AI 64GiB", 64),
+    )
+    for name, vram in expected:
+        gpu = get_gpu(name)
+        assert gpu.vram_gib == vram
+        assert gpu.bandwidth_gb_s is None
+        assert gpu.fp16_tflops is None
+        assert gpu.fp8_tflops is None
+    gpu = get_gpu("Ascend 910C 128GiB")
+    model = get_model("Llama 3.1 8B")
+    report = evaluate_fits(
+        total_params=model.total_params,
+        weight_dtype="BF16",
+        concurrent=1,
+        context=8192,
+        layers=model.layers,
+        kv_heads=model.kv_heads,
+        head_dim=model.head_dim,
+        kv_dtype="BF16",
+        gpus=(gpu,),
+    )
+    one = next(option for option in report.options if option.cards == 1)
+    assert one.verdict == "放下"
+    skipped = estimate_throughput(
+        active_params=model.active_params,
+        weight_dtype="BF16",
+        concurrent=1,
+        context=8192,
+        layers=model.layers,
+        kv_heads=model.kv_heads,
+        head_dim=model.head_dim,
+        kv_dtype="BF16",
+        cards=1,
+        bandwidth_gb_s=None,
+        fp16_tflops=None,
+    )
+    assert skipped.decode_tokens_per_s is None
+    assert skipped.prefill_tokens_per_s is None
+    assert skipped.note == NON_CUDA_THROUGHPUT_NOTE
+    body = estimate_request(
+        {
+            "model": "Llama 3.1 8B",
+            "weight_dtype": "BF16",
+            "kv_dtype": "BF16",
+            "context": 8192,
+            "concurrent": 1,
+            "gpu_mode": "one",
+            "gpu_name": "Ascend 910C 128GiB",
+        }
+    )
+    assert body["ok"] is True
+    assert body["recommendation"]["verdict"] == "放下"
+    assert body["recommendation"]["decode_tokens_per_s"] is None
+    assert NON_CUDA_THROUGHPUT_NOTE in body["assumptions"]
+    assert body["recommendation"]["prefill_note"] == NON_CUDA_THROUGHPUT_NOTE
 
 
 def _option(name, vram, cards, verdict):

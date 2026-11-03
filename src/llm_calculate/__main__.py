@@ -27,8 +27,8 @@ KV_DTYPES = ("BF16", "FP16", "FP8")
 class _Gpu:
     name: str
     vram_gib: float
-    bandwidth_gb_s: float
-    fp16_tflops: float
+    bandwidth_gb_s: float | None
+    fp16_tflops: float | None
     fp8_tflops: float | None
 
 
@@ -74,6 +74,7 @@ def estimate_request(payload: dict) -> dict:
     )
     by_name = {gpu.name: gpu for gpu in chosen_gpus}
     options = []
+    assumptions_extra = []
     for option in fit.options:
         row = {
             "gpu_name": option.gpu_name,
@@ -95,6 +96,8 @@ def estimate_request(payload: dict) -> dict:
             row["prefill_tokens_per_s"] = throughput.prefill_tokens_per_s
             row["prefill_compute"] = throughput.prefill_compute
             row["prefill_note"] = throughput.prefill_note
+            if throughput.note and throughput.note not in assumptions_extra:
+                assumptions_extra.append(throughput.note)
         options.append(row)
 
     recommendation = None
@@ -128,6 +131,7 @@ def estimate_request(payload: dict) -> dict:
         assumptions.append("权重显存按总参数计算，吞吐按激活参数计算")
     if spec.kv_note:
         assumptions.append(spec.kv_note)
+    assumptions.extend(assumptions_extra)
     return {
         "ok": True,
         "weight_gib": weight,

@@ -152,10 +152,12 @@
           "推荐 " + chosen.gpu_name + " × " + chosen.cards + "（" + chosen.verdict + "），总显存 "
           + fmtGib(chosen.total_gib) + " GiB"
         ));
-        split.append(line(
-          "解码 " + fmtTokens(chosen.decode_tokens_per_s) + " tokens/s，预填 "
-          + fmtTokens(chosen.prefill_tokens_per_s) + " tokens/s"
-        ));
+        if (typeof chosen.decode_tokens_per_s === "number") {
+          split.append(line(
+            "解码 " + fmtTokens(chosen.decode_tokens_per_s) + " tokens/s，预填 "
+            + fmtTokens(chosen.prefill_tokens_per_s) + " tokens/s"
+          ));
+        }
         if (chosen.prefill_note) split.append(line(chosen.prefill_note));
       } else if (body.note) {
         split.append(line(body.note));
@@ -182,8 +184,8 @@
           String(option.cards),
           fmtGib(option.per_card_gib),
           verdict,
-          fmtTokens(option.decode_tokens_per_s),
-          fmtTokens(option.prefill_tokens_per_s),
+          typeof option.decode_tokens_per_s === "number" ? fmtTokens(option.decode_tokens_per_s) : "不适用",
+          typeof option.prefill_tokens_per_s === "number" ? fmtTokens(option.prefill_tokens_per_s) : "不适用",
         ]);
       }
       root.append(table);

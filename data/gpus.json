@@ -55,6 +55,70 @@
       "fp16_tflops": 148,
       "fp8_tflops": 296,
       "source": "NVIDIA 无公开产品页。2023 渠道简报的单值（96 GB HBM3、4.0 TB/s、FP16 148、FP8 296），按无稀疏录入，不再减半"
+    },
+    {
+      "name": "B200 180GB SXM",
+      "vram_gib": 180,
+      "bandwidth_gb_s": 7700,
+      "fp16_tflops": 2250,
+      "fp8_tflops": 4500,
+      "source": "NVIDIA Blackwell 数据表 HGX B200 列，SXM6。180GB HBM3e，7.7 TB/s。FP16/FP8 脚注带稀疏为 4.5 / 9 PFLOPS，稠密为一半。不用 GB200 的 186GB / 8 TB/s"
+    },
+    {
+      "name": "H100 NVL 94GB",
+      "vram_gib": 94,
+      "bandwidth_gb_s": 3938,
+      "fp16_tflops": 835.5,
+      "fp8_tflops": 1670.5,
+      "source": "NVIDIA H100 产品页 NVL，PCIe 双槽，不是 SXM。显存 94GB。产品页带宽 3.9 TB/s，产品简报峰值 3938 GB/s，本表用峰值。FP16/FP8 脚注带稀疏 1671 / 3341，取一半"
+    },
+    {
+      "name": "A800 80GB SXM",
+      "vram_gib": 80,
+      "bandwidth_gb_s": 2039,
+      "fp16_tflops": 312,
+      "fp8_tflops": null,
+      "source": "中国市场型号。SXM 规格与 A100 80GB SXM 的显存、2039 GB/s 和 FP16 无稀疏 312 相同。无 FP8。NVLink 为 400 GB/s，不是 A100 的 600。不用 80GB PCIe（1935 GB/s）"
+    },
+    {
+      "name": "H800 80GB SXM",
+      "vram_gib": 80,
+      "bandwidth_gb_s": 3350,
+      "fp16_tflops": 989.5,
+      "fp8_tflops": 1979,
+      "source": "中国市场型号。NVIDIA 中文规格 SXM：80GB、3.35 TB/s。FP16/FP8 带稀疏 1979/3958，非稀疏为一半，与 H100 SXM 相同。NVLink 400 GB/s，不是 H100 的 900。不用 PCIe（带宽 2 TB/s）"
+    },
+    {
+      "name": "L20 48GB",
+      "vram_gib": 48,
+      "bandwidth_gb_s": 864,
+      "fp16_tflops": 119.5,
+      "fp8_tflops": 239,
+      "source": "中国市场 Ada 数据中心卡，无 nvidia.com 英文产品页。HPE：48GB GDDR6、864 GB/s。PNY 规格 FP16 119.5、FP8 239，未给稀疏对，按无稀疏单值录入"
+    },
+    {
+      "name": "L4 24GB",
+      "vram_gib": 24,
+      "bandwidth_gb_s": 300,
+      "fp16_tflops": 121,
+      "fp8_tflops": 242.5,
+      "source": "NVIDIA L4 产品页。24GB，300 GB/s。FP16/FP8 标成带稀疏 242 / 485，页注无稀疏为一半。Ada 白皮书附录同一对为 121|242 与 242|485"
+    },
+    {
+      "name": "RTX 6000 Ada 48GB",
+      "vram_gib": 48,
+      "bandwidth_gb_s": 960,
+      "fp16_tflops": 364.2,
+      "fp8_tflops": 728.5,
+      "source": "NVIDIA RTX 6000 Ada 数据表：48GB GDDR6、960 GB/s。Ada 专业卡白皮书 FP16 累加无稀疏/稀疏为 364.2/728.4，FP8 为 728.5/1457。产品页 1457 是带稀疏的 FP8"
+    },
+    {
+      "name": "RTX 5090 32GB",
+      "vram_gib": 32,
+      "bandwidth_gb_s": 1792,
+      "fp16_tflops": 419,
+      "fp8_tflops": 838,
+      "source": "NVIDIA RTX Blackwell 架构白皮书，与 4090 同一口径：FP16 累加的无稀疏一侧。FP16 419/838，FP8 838/1676。显存 32GB GDDR7，带宽 1792 GB/s"
     }
   ]
 }

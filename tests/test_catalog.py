@@ -34,6 +34,14 @@ EXPECTED_GPUS = (
     ("H100 80GB SXM", 80, 3350, 989.5, 1979),
     ("H200 141GB SXM", 141, 4800, 989.5, 1979),
     ("H20 96GB", 96, 4000, 148, 296),
+    ("B200 180GB SXM", 180, 7700, 2250, 4500),
+    ("H100 NVL 94GB", 94, 3938, 835.5, 1670.5),
+    ("A800 80GB SXM", 80, 2039, 312, None),
+    ("H800 80GB SXM", 80, 3350, 989.5, 1979),
+    ("L20 48GB", 48, 864, 119.5, 239),
+    ("L4 24GB", 24, 300, 121, 242.5),
+    ("RTX 6000 Ada 48GB", 48, 960, 364.2, 728.5),
+    ("RTX 5090 32GB", 32, 1792, 419, 838),
 )
 
 
@@ -172,9 +180,9 @@ def test_llama31_70b_bf16_rtx4090_one_card_does_not_fit():
     assert report.weight_gib > 24
     chosen = report.recommendation
     assert chosen.verdict == "放下"
-    assert chosen.cards == 2
-    assert chosen.vram_gib == 80
-    assert chosen.gpu_name == "A100 80GB SXM"
+    assert chosen.cards == 1
+    assert chosen.vram_gib == 180
+    assert chosen.gpu_name == "B200 180GB SXM"
     assert report.note is None
     assert max(option.cards for option in report.options) == 8
     h200 = next(option for option in report.options if option.gpu_name == "H200 141GB SXM" and option.cards == 1)

@@ -131,10 +131,11 @@
     {
       "name": "Ascend 910C 128GiB",
       "vram_gib": 128,
-      "bandwidth_gb_s": null,
-      "fp16_tflops": null,
+      "bandwidth_gb_s": 3200,
+      "fp16_tflops": 800,
       "fp8_tflops": null,
-      "source": "国产加速卡占位。显存约 128 GiB，未核对厂商峰值。带宽与 Tensor 留空"
+      "throughput_caveat": "峰值标称粗估，不是 CUDA 实测栈",
+      "source": "华为 HC / 徐直军发布会转述（界面新闻等）。NPU。带宽 3200 GB/s，FP16 800 TFLOPS，为峰值标称粗估，不是 CUDA 实测栈。INT8 1600 TOPS 不记入 FP8。显存约 128 GiB"
     },
     {
       "name": "Cambricon MLU590 96GiB",
@@ -147,10 +148,11 @@
     {
       "name": "Cambricon MLU370-X8 48GiB",
       "vram_gib": 48,
-      "bandwidth_gb_s": null,
-      "fp16_tflops": null,
+      "bandwidth_gb_s": 614.4,
+      "fp16_tflops": 96,
       "fp8_tflops": null,
-      "source": "国产加速卡占位。显存约 48 GiB，未核对厂商峰值。带宽与 Tensor 留空"
+      "throughput_caveat": "峰值标称粗估，不是 CUDA 实测栈",
+      "source": "寒武纪官网产品页。带宽 614.4 GB/s，FP16 96 TFLOPS，为峰值标称粗估，不是 CUDA 实测栈。无官方 FP8。显存约 48 GiB"
     },
     {
       "name": "Biren BR100 64GiB",
@@ -163,10 +165,11 @@
     {
       "name": "Moore Threads MTT S4000 48GiB",
       "vram_gib": 48,
-      "bandwidth_gb_s": null,
-      "fp16_tflops": null,
+      "bandwidth_gb_s": 768,
+      "fp16_tflops": 100,
       "fp8_tflops": null,
-      "source": "国产加速卡占位。显存约 48 GiB，未核对厂商峰值。带宽与 Tensor 留空"
+      "throughput_caveat": "峰值标称粗估，不是 CUDA 实测栈",
+      "source": "docs.mthreads.com S4000 product_specifications。带宽 768 GB/s，FP16 100 TFLOPS，为峰值标称粗估，不是 CUDA 实测栈。无官方 FP8。显存约 48 GiB"
     },
     {
       "name": "Iluvatar BI-V150 64GiB",

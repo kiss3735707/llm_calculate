@@ -30,6 +30,7 @@ class _Gpu:
     bandwidth_gb_s: float | None
     fp16_tflops: float | None
     fp8_tflops: float | None
+    throughput_caveat: str = ""
 
 
 def default_kv_dtype(weight_dtype: str) -> str:
@@ -98,6 +99,8 @@ def estimate_request(payload: dict) -> dict:
             row["prefill_note"] = throughput.prefill_note
             if throughput.note and throughput.note not in assumptions_extra:
                 assumptions_extra.append(throughput.note)
+            if gpu.throughput_caveat and gpu.throughput_caveat not in assumptions_extra:
+                assumptions_extra.append(gpu.throughput_caveat)
         options.append(row)
 
     recommendation = None
@@ -293,12 +296,19 @@ def _read_gpus(payload: dict):
             fp8 = _positive_number(raw_fp8)
             if fp8 is None:
                 return _fail("FP8 算力必须是正数")
-        return [_Gpu(title, vram, bandwidth, fp16, fp8)]
+        return [_Gpu(title, vram, bandwidth, fp16, fp8, "")]
     return _fail("请选择全部预置显卡、一张预置显卡，或填写自定义显卡")
 
 
 def _copy_gpu(gpu) -> _Gpu:
-    return _Gpu(gpu.name, gpu.vram_gib, gpu.bandwidth_gb_s, gpu.fp16_tflops, gpu.fp8_tflops)
+    return _Gpu(
+        gpu.name,
+        gpu.vram_gib,
+        gpu.bandwidth_gb_s,
+        gpu.fp16_tflops,
+        gpu.fp8_tflops,
+        getattr(gpu, "throughput_caveat", ""),
+    )
 
 
 def _throughput(spec, weight_dtype, kv_dtype, context, concurrent, cards, gpu):

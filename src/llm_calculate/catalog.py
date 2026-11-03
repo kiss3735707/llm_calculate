@@ -28,6 +28,7 @@ class Gpu:
     fp16_tflops: float | None
     fp8_tflops: float | None
     source: str
+    throughput_caveat: str = ""
 
 
 def models() -> tuple[Model, ...]:

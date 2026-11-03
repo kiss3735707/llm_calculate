@@ -65,8 +65,8 @@ def test_llama70b_rtx4090_one_card_and_recommendation_match_estimate():
     assert one["available"] is True
     assert one["verdict"] == "放不下"
     chosen = body["recommendation"]
-    assert chosen["gpu_name"] == "A100 80GB SXM"
-    assert chosen["cards"] == 2
+    assert chosen["gpu_name"] == "B200 180GB SXM"
+    assert chosen["cards"] == 1
     assert chosen["verdict"] == "放下"
     assert chosen["cards"] in (1, 2, 4, 8)
     model = get_model("Llama 3.1 70B")
